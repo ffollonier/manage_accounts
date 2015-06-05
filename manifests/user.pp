@@ -1,86 +1,148 @@
 #
-# virtual_user defined type
+# This defined type manage user
 #
-define manage_accounts::virtual_user (
-  $ssh_keys = {},
-  $username = $title,
-  $domainname = undef,
-  $defaultgroup = "Domain Users",
-  $home_permissions = $::osfamily ? {
-                        'Debian' => '0755',
-                        'RedHat' => '0700',
-                        default  => '0700',
-                      },
-  $ensure = present,
-  $recurse_permissions = false,
-  ) {
-  validate_re($ensure, [ '^absent$', '^present$' ], 'The $ensure parameter must be \'absent\' or \'present\'')
-  validate_hash($ssh_keys)
+define manage_accounts::user (
+  $ensure = "present",
+  # common attributes
+  $username = "$title",
+  $manage_ssh_authkeys = false,
+  $ssh_authkeys = {},
+  # local user specific attributes
+  $uid = undef,
+  $gid = undef,
+  $groups = [],
+  $comment = "${title}",
+  $shell = "/bin/bash", 
+  $pwhash = "",
+  $home = "/home/${title}", 
+  $managehome = true,
+  # virtual user's specific attributes
+  $virtual = false,
+  $domain_name = undef,
+  $domain_principalgroup = "Domain Users", ) 
+{
+  # define some local variables
+  $home_dir=""
+  $main_group=""
 
-  if $domainname {
-    # ensure that the domain home directory exists
-    file { "/home/${domainname}":
-	    ensure  => directory,
-	    owner   => root,
-	    group   => root,
-	    mode    => "0711",
-	  }
+  # validate some fields
+  validate_re($ensure, [ "^absent$", "^present$" ], 'The $ensure parameter must be \'absent\' or \'present\'')
+  validate_hash($ssh_authkeys)
 
-    $home_dir = "/home/${domainname}/${username}"
+  # user ressource with common attributes
+  user
+  { 
+    $username:
+	    ensure  => $ensure,
+	    purge_ssh_keys => $manage_ssh_authkeys,
   }
-  else {
-    $home_dir = "/home/${username}"
-  }
+  
+
+  if !$virtual
+  {
+    # local user specifics
+    User <| title == $username |> { uid => $uid }
     
-  # ensure that the user home directory exists
-  file { $home_dir:
-    ensure  => directory,
-    owner   => $username,
-    group   => $defaultgroup,
-    recurse => $recurse_permissions,
-    mode    => $home_permissions,
+    if $gid
+    {
+      User <| title == $username |> { gid => $gid }
+      $main_group = $gid            
+    }
+    else
+    {
+      $main_group = $title
+    }
+    
+	  User <| title == $username |> { groups => $groups }
+	  User <| title == $username |> { comment => $comment }
+	  User <| title == $username |> { shell => $shell }
+	  
+	  if $pwhash != ""
+    {
+      User <| title == $username |> { password => $pwhash }
+    }
+    
+	  User <| title == $username |> { managehome => $managehome }
+	  User <| title == $username |> { home => $home }
+	  $home_dir = $home
   }
-  
-  file { "${home_dir}/.ssh":
-    ensure  => directory,
-    owner   => $username,
-    group   => $username,
-    mode    => '0700',
-    require => File[$home_dir],
-  }
+  else
+  {
+    # virtual user specifics (like Active Directory user)
 
-  file { "${home_dir}/.ssh/authorized_keys":
-    ensure  => present,
-    owner   => $username,
-    group   => $username,
-    mode    => '0600',
-    require => File["${home_dir}/.ssh"],
-  }
-  
-  Ssh_authorized_key {
-    require =>  File["${home_dir}/.ssh/authorized_keys"]
-  }
-  
-  $ssh_key_defaults = {
-    ensure => present,
-    user   => $username,
-    'type' => 'ssh-rsa'
-  }
-  if $ssh_key {
-    # for unique resource naming
-    $suffix = empty($ssh_key['comment']) ? {
-      undef   => $ssh_key['type'],
-      default => $ssh_key['comment']
+    # ensure that the home dir for the virtual user exists
+    if $domain_name 
+    {
+	    # ensure that the domain home directory exists
+	    file 
+	    { 
+	      "/home/${domain_name}":
+		      ensure  => directory,
+		      owner   => root,
+		      group   => root,
+		      mode    => "0711",
+	    }
+
+      $home_dir = "/home/${domain_name}/${username}"
     }
-    ssh_authorized_key { "${username}_${suffix}":
-      ensure => present,
-      user   => $username,
-      type   => $ssh_key['type'],
-      key    => $ssh_key['key'],
+    else 
+    {
+      $home_dir = "/home/${username}"
     }
+    
+    # ensure that the home directory exists
+    file 
+    { 
+      $home_dir:
+		    ensure  => directory,
+		    owner   => $username,
+		    group   => $domain_principalgroup,
+		    mode    => "0700",
+    }
+    
+    $main_group = $domain_principalgroup
   }
   
-  if $ssh_keys {
-    create_resources('ssh_authorized_key', $ssh_keys, $ssh_key_defaults)
+  # SSH authorized keys management for the user
+  if $manage_ssh_authkeys
+  {
+    # ensure that the .ssh and the authorized_keys exists
+    file 
+    {
+      "${home_dir}/.ssh":
+		    ensure  => directory,
+		    owner   => $username,
+		    group   => $main_group,
+		    mode    => '0700',
+		    require => File[$home_dir],
+    }
+
+	  file 
+	  { 
+	    "${home_dir}/.ssh/authorized_keys":
+		    ensure  => present,
+		    owner   => $username,
+		    group   => $main_group,
+		    mode    => '0600',
+		    require => File["${home_dir}/.ssh"],
+	  }
+	  
+	  # ssh_authorized_key part
+    Ssh_authorized_key 
+    {
+      require => File["${home_dir}/.ssh/authorized_keys"]
+    }
+    
+    $ssh_authkeys_defaults = 
+    {
+	    ensure => present,
+	    user   => $username,
+	    type   => "ssh-rsa"
+    }
+    
+    if $ssh_authkeys
+    {
+      create_resources("ssh_authorized_key", $ssh_authkeys, $ssh_authkeys_defaults)
+    }
   }
 }

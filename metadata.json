@@ -4,10 +4,6 @@
   	{
   		"name": "puppetlabs/stdlib",
   		"version_requirement":">= 4.6.0"
-  	},
-  	{
-  		"name": "deric/accounts",
-  		"version_requirement":">= 1.1.2"
   	}
   ],
   "license": "GPL-3.0",
@@ -19,8 +15,8 @@
     }],
   "project_page": "https://forge.puppetlabs.com/ffollonier/manage_accounts",
   "requirements": [],
-  "source": "https://forge.puppetlabs.com/ffollonier/manage_accounts",
-  "summary": "A puppet module that manage local or virtual users (ActiveDirectory) f.e. Active Directory user) directory exists and publish the corresponding ssh_authorized_keys",
-  "tags": ["manage_accounts", "activedirectory", "ssh", "ssh_authorized_key"],
-  "version": "0.1.0"
+  "source": "https://github.com/ffollonier/manage_accounts",
+  "summary": "A puppet module that manage local or virtual users (like Active Directory users) and publish the corresponding ssh_authorized_keys",
+  "tags": ["manage_accounts", "activedirectory", "ssh", "ssh_authorized_key", "accounts"],
+  "version": "0.1.1"
 }

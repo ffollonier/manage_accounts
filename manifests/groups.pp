@@ -1,13 +1,5 @@
 #
-# This module manages accounts
-#
-# Parameters: none
-#
-# Actions:
-#
-# Requires: see Modulefile
-#
-# Sample Usage:
+# This class manage groups
 #
 class manage_accounts::groups (
   $groups = {},
@@ -17,6 +9,6 @@ class manage_accounts::groups (
   validate_hash($groups)
 
   if $manage {
-    create_resources(accounts::group, $groups)
+    create_resources(manage_accounts::group, $groups)
   }
 }
