@@ -1,3 +1,6 @@
+v0.2.0
+- rebuild users, groups, user part to fix some issues
+
 v0.1.1
 - fix dependencies on the metadata.json
 

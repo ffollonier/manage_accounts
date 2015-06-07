@@ -19,22 +19,22 @@ define manage_accounts::user (
   # virtual user's specific attributes
   $virtual = false,
   $domain_name = undef,
-  $domain_principalgroup = "Domain Users", ) 
-{
-  # define some local variables
-  $home_dir=""
-  $main_group=""
-
+  $domain_principalgroup = "domain users", ) 
+{ 
   # validate some fields
   validate_re($ensure, [ "^absent$", "^present$" ], 'The $ensure parameter must be \'absent\' or \'present\'')
   validate_hash($ssh_authkeys)
+  validate_bool($manage_ssh_authkeys)
+  validate_bool($managehome)
+  validate_bool($virtual)
 
   # user ressource with common attributes
   user
   { 
     $username:
 	    ensure  => $ensure,
-	    purge_ssh_keys => $manage_ssh_authkeys,
+	    home    => $home,
+      purge_ssh_keys => $manage_ssh_authkeys,
   }
   
 
@@ -63,37 +63,15 @@ define manage_accounts::user (
     }
     
 	  User <| title == $username |> { managehome => $managehome }
-	  User <| title == $username |> { home => $home }
-	  $home_dir = $home
   }
   else
   {
     # virtual user specifics (like Active Directory user)
-
-    # ensure that the home dir for the virtual user exists
-    if $domain_name 
-    {
-	    # ensure that the domain home directory exists
-	    file 
-	    { 
-	      "/home/${domain_name}":
-		      ensure  => directory,
-		      owner   => root,
-		      group   => root,
-		      mode    => "0711",
-	    }
-
-      $home_dir = "/home/${domain_name}/${username}"
-    }
-    else 
-    {
-      $home_dir = "/home/${username}"
-    }
     
     # ensure that the home directory exists
     file 
     { 
-      $home_dir:
+      $home:
 		    ensure  => directory,
 		    owner   => $username,
 		    group   => $domain_principalgroup,
@@ -109,28 +87,28 @@ define manage_accounts::user (
     # ensure that the .ssh and the authorized_keys exists
     file 
     {
-      "${home_dir}/.ssh":
+      "${home}/.ssh":
 		    ensure  => directory,
 		    owner   => $username,
 		    group   => $main_group,
 		    mode    => '0700',
-		    require => File[$home_dir],
+		    require => File[$home],
     }
 
 	  file 
 	  { 
-	    "${home_dir}/.ssh/authorized_keys":
+	    "${home}/.ssh/authorized_keys":
 		    ensure  => present,
 		    owner   => $username,
 		    group   => $main_group,
 		    mode    => '0600',
-		    require => File["${home_dir}/.ssh"],
+		    require => File["${home}/.ssh"],
 	  }
 	  
 	  # ssh_authorized_key part
     Ssh_authorized_key 
     {
-      require => File["${home_dir}/.ssh/authorized_keys"]
+      require => File["${home}/.ssh/authorized_keys"]
     }
     
     $ssh_authkeys_defaults = 
