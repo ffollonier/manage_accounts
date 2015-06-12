@@ -18,5 +18,5 @@
   "source": "https://github.com/ffollonier/manage_accounts",
   "summary": "A puppet module that manage local or virtual users (like Active Directory users) and publish the corresponding ssh_authorized_keys",
   "tags": ["manage_accounts", "activedirectory", "ssh", "ssh_authorized_key", "accounts"],
-  "version": "0.2.0"
+  "version": "0.2.1"
 }
