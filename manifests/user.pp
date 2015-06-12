@@ -16,6 +16,7 @@ define manage_accounts::user (
   $pwhash = "",
   $home = "/home/${title}", 
   $managehome = true,
+  $home_perms = "",
   # virtual user's specific attributes
   $virtual = false,
   $domain_name = undef,
@@ -36,11 +37,21 @@ define manage_accounts::user (
 	    home    => $home,
       purge_ssh_keys => $manage_ssh_authkeys,
   }
-  
 
   if !$virtual
   {
     # local user specifics
+    
+     # ensure that the home directory exists
+    file 
+    { 
+      $home:
+        ensure  => directory,
+        owner   => $username,
+        group   => $gid,
+        mode    => "${home_perms}",
+    }
+    
     User <| title == $username |> { uid => $uid }
     
     if $gid
@@ -88,7 +99,7 @@ define manage_accounts::user (
 		    ensure  => directory,
 		    owner   => $username,
 		    group   => $domain_principalgroup,
-		    mode    => "0700",
+		    mode    => "${home_perms}",
     }
     
     $main_group = $domain_principalgroup
