@@ -68,6 +68,19 @@ define manage_accounts::user (
   {
     # virtual user specifics (like Active Directory user)
     
+    # ensure that the domain home base directory exists
+    if $domain_name != ""
+    {
+      file
+      {
+        "/home/${domain_name}":
+          ensure  => directory,
+          owner   => root,
+          group   => root,
+          mode    => "0711",
+      }
+    }
+    
     # ensure that the home directory exists
     file 
     { 
