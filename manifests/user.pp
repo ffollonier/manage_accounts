@@ -115,8 +115,7 @@ define manage_accounts::user (
 		    ensure  => directory,
 		    owner   => $username,
 		    group   => $main_group,
-		    mode    => '0700',
-		    require => File[$home],
+		    mode    => '0700'
     }
 
 	  file 
@@ -126,7 +125,6 @@ define manage_accounts::user (
 		    owner   => $username,
 		    group   => $main_group,
 		    mode    => '0600',
-		    require => File["${home}/.ssh"],
 	  }
 	  
 	  # ssh_authorized_key part

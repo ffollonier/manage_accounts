@@ -1,3 +1,6 @@
+v0.2.2
+- add home_perms property to user class
+
 v0.2.1
 - ensure that the domain home base directory exists
 
