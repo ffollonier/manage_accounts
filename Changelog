@@ -1,3 +1,6 @@
+v0.2.5
+- FEATURE: add $home_owner and $home_group user class property
+
 v0.2.4
 - BUGFIX: add home_perms defaut value
 

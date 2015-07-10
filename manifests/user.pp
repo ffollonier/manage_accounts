@@ -2,7 +2,7 @@
 # This defined type manage user
 #
 define manage_accounts::user (
-  $ensure = "present",
+  $ensure = 'present',
   # common attributes
   $username = "$title",
   $manage_ssh_authkeys = false,
@@ -12,15 +12,17 @@ define manage_accounts::user (
   $gid = undef,
   $groups = [],
   $comment = "${title}",
-  $shell = "/bin/bash", 
-  $pwhash = "",
+  $shell = '/bin/bash', 
+  $pwhash = undef,
   $home = "/home/${title}", 
   $managehome = true,
-  $home_perms = "0700",
+  $home_owner = undef,
+  $home_group = undef,
+  $home_perms = '0700',
   # virtual user's specific attributes
   $virtual = false,
   $domain_name = undef,
-  $domain_principalgroup = "domain users", ) 
+  $domain_principalgroup = 'domain users', ) 
 { 
   # validate some fields
   validate_re($ensure, [ "^absent$", "^present$" ], 'The $ensure parameter must be \'absent\' or \'present\'')
@@ -42,14 +44,17 @@ define manage_accounts::user (
   {
     # local user specifics
     
-    # ensure that the home directory exists
-    file 
-    { 
-      $home:
-        ensure => directory,
-        owner => $username,
-        group => $gid,
-        mode => "${home_perms}",
+    # ensure that the home directory exists if we managehome
+    if $managehome
+    {
+      file 
+      { 
+        $home:
+          ensure => directory,
+          owner => $home_owner,
+          group => $home_group,
+          mode => "${home_perms}",
+      }
     }
     
     User <| title == $username |> { uid => $uid }
@@ -68,7 +73,7 @@ define manage_accounts::user (
 	  User <| title == $username |> { comment => $comment }
 	  User <| title == $username |> { shell => $shell }
 	  
-	  if $pwhash != ""
+	  if $pwhash
     {
       User <| title == $username |> { password => $pwhash }
     }
@@ -80,7 +85,7 @@ define manage_accounts::user (
     # virtual user specifics (like Active Directory user)
     
     # ensure that the domain home base directory exists
-    if $domain_name != ""
+    if $domain_name
     {
       file
       {
@@ -88,7 +93,7 @@ define manage_accounts::user (
           ensure => directory,
           owner => root,
           group => root,
-          mode => "0711",
+          mode => '0711',
       }
     }
     
@@ -137,12 +142,12 @@ define manage_accounts::user (
     {
 	    ensure => present,
 	    user => $username,
-	    type => "ssh-rsa"
+	    type => 'ssh-rsa'
     }
     
     if $ssh_authkeys
     {
-      create_resources("ssh_authorized_key", $ssh_authkeys, $ssh_authkeys_defaults)
+      create_resources('ssh_authorized_key', $ssh_authkeys, $ssh_authkeys_defaults)
     }
   }
 }
