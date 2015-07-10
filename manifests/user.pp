@@ -16,7 +16,7 @@ define manage_accounts::user (
   $pwhash = "",
   $home = "/home/${title}", 
   $managehome = true,
-  $home_perms = "",
+  $home_perms = "0700",
   # virtual user's specific attributes
   $virtual = false,
   $domain_name = undef,
@@ -31,10 +31,10 @@ define manage_accounts::user (
 
   # user ressource with common attributes
   user
-  { 
+  {
     $username:
-	    ensure  => $ensure,
-	    home    => $home,
+	    ensure => $ensure,
+	    home => $home,
       purge_ssh_keys => $manage_ssh_authkeys,
   }
 
@@ -42,14 +42,14 @@ define manage_accounts::user (
   {
     # local user specifics
     
-     # ensure that the home directory exists
+    # ensure that the home directory exists
     file 
     { 
       $home:
-        ensure  => directory,
-        owner   => $username,
-        group   => $gid,
-        mode    => "${home_perms}",
+        ensure => directory,
+        owner => $username,
+        group => $gid,
+        mode => "${home_perms}",
     }
     
     User <| title == $username |> { uid => $uid }
@@ -85,10 +85,10 @@ define manage_accounts::user (
       file
       {
         "/home/${domain_name}":
-          ensure  => directory,
-          owner   => root,
-          group   => root,
-          mode    => "0711",
+          ensure => directory,
+          owner => root,
+          group => root,
+          mode => "0711",
       }
     }
     
@@ -96,10 +96,10 @@ define manage_accounts::user (
     file 
     { 
       $home:
-		    ensure  => directory,
-		    owner   => $username,
-		    group   => $domain_principalgroup,
-		    mode    => "${home_perms}",
+		    ensure => directory,
+		    owner => $username,
+		    group => $domain_principalgroup,
+		    mode => "${home_perms}",
     }
     
     $main_group = $domain_principalgroup
@@ -112,19 +112,19 @@ define manage_accounts::user (
     file 
     {
       "${home}/.ssh":
-		    ensure  => directory,
-		    owner   => $username,
-		    group   => $main_group,
-		    mode    => '0700'
+		    ensure => directory,
+		    owner => $username,
+		    group => $main_group,
+		    mode => '0700'
     }
 
 	  file 
 	  { 
 	    "${home}/.ssh/authorized_keys":
-		    ensure  => present,
-		    owner   => $username,
-		    group   => $main_group,
-		    mode    => '0600',
+		    ensure => present,
+		    owner => $username,
+		    group => $main_group,
+		    mode => '0600'
 	  }
 	  
 	  # ssh_authorized_key part
@@ -136,8 +136,8 @@ define manage_accounts::user (
     $ssh_authkeys_defaults = 
     {
 	    ensure => present,
-	    user   => $username,
-	    type   => "ssh-rsa"
+	    user => $username,
+	    type => "ssh-rsa"
     }
     
     if $ssh_authkeys
