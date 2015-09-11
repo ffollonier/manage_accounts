@@ -16,12 +16,14 @@ define manage_accounts::user (
   $pwhash = undef,
   $home = "/home/${title}", 
   $managehome = true,
+  $sync_home = false,
+  $sync_home_src = "",
   $home_owner = undef,
   $home_group = undef,
   $home_perms = '0700',
   # virtual user's specific attributes
   $virtual = false,
-  $domain_name = undef,
+  $domain_name = "",
   $domain_principalgroup = 'domain users', ) 
 { 
   # validate some fields
@@ -29,7 +31,10 @@ define manage_accounts::user (
   validate_hash($ssh_authkeys)
   validate_bool($manage_ssh_authkeys)
   validate_bool($managehome)
+  validate_bool($sync_home)
+  validate_string($sync_home_src)
   validate_bool($virtual)
+  validate_string($domain_name)
 
   # user ressource with common attributes
   user
@@ -47,13 +52,30 @@ define manage_accounts::user (
     # ensure that the home directory exists if we managehome
     if $managehome
     {
-      file 
-      { 
-        $home:
-          ensure => directory,
-          owner => $home_owner,
-          group => $home_group,
-          mode => "${home_perms}",
+      if $sync_home and $sync_home_src != ""
+      {
+        file
+        {
+          $home:
+	          ensure => directory,
+	          owner => $home_owner,
+	          group => $home_group,
+	          mode => "${home_perms}",
+	          source => "${sync_home_src}",
+	          recurse => true,
+	          recurselimit => 2,
+        }
+      }
+      else
+      {
+        file 
+		    { 
+		      $home:
+		        ensure => directory,
+		        owner => $home_owner,
+		        group => $home_group,
+		        mode => "${home_perms}",
+		    }        
       }
     }
     

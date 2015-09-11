@@ -1,3 +1,6 @@
+v0.3.0
+- FEATURE: add $sync_home abd $sync_home_src user class property
+
 v0.2.5
 - FEATURE: add $home_owner and $home_group user class property
 
